@@ -5,12 +5,12 @@ import pickle
 from groq import Groq
 import time
 import streamlit.components.v1 as components
-import os  # Moved to top
+import os
 
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(page_title="C.L.A.M. AI Physician", page_icon="👨‍⚕️", layout="centered")
 
-# --- 2. MAIN UI STYLING ---
+# --- 2. UI STYLING ---
 st.markdown("""
 <style>
     .main-title { color: #1e3a8a; text-align: center; font-weight: bold; margin-bottom: 5px; }
@@ -22,25 +22,24 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. MODEL LOADING ---
+# --- 3. MODEL LOADING (Fixed Pathing & Global Variable) ---
 @st.cache_resource
 def load_ml_model():
-    # This gets the absolute path to the directory this script is in
+    # Use absolute path to ensure the server finds it regardless of directory
     base_path = os.path.dirname(__file__)
     file_path = os.path.join(base_path, 'heart_model.pkl')
     
     if not os.path.exists(file_path):
-        # This lists all files available to help you debug
-        available_files = os.listdir(base_path)
-        st.error(f"FILE NOT FOUND. Looking for: {file_path}")
-        st.write(f"Files actually present: {available_files}")
         return None
     try:
         with open(file_path, 'rb') as f:
             return pickle.load(f)
-    except Exception as e:
-        st.error(f"CORRUPT MODEL ERROR: {e}")
+    except:
         return None
+
+# CRITICAL: This line fixes the NameError
+model = load_ml_model()
+
 # --- 4. SIDEBAR INPUTS ---
 with st.sidebar:
     st.header("📋 Patient Profile")
@@ -68,16 +67,16 @@ if not predict_clicked:
     st.markdown("<p class='made-by'>Created by Vidhan Jain</p>", unsafe_allow_html=True)
     st.markdown("""<div class="accuracy-card"><h3>Diagnostic Accuracy: 88.0%</h3></div>""", unsafe_allow_html=True)
     
-    # Alert the user if the model file is missing before they click predict
+    # Pre-check for the user
     if model is None:
-        st.error("⚠️ SYSTEM ALERT: 'heart_model.pkl' not detected in root directory.")
+        st.error("⚠️ SYSTEM ALERT: 'heart_model.pkl' not detected. Prediction functionality is disabled.")
 else:
     try:
         sex_val = 1 if sex == "Male" else 0
         features = np.array([[age, sex_val, cp, bp, chol, fbs, restecg, maxhr, exang, oldpeak, slope, ca, thal]])
         
-        # Check if model exists and has the required method
-        if model and hasattr(model, 'predict_proba'):
+        # Diagnosis Logic
+        if model is not None:
             prob_raw = model.predict_proba(features)[0][1]
             risk_val = "{:.1f}".format(prob_raw * 100)
             status = "Elevated Risk Detected" if prob_raw >= 0.5 else "No Significant Risk Detected"
@@ -85,8 +84,7 @@ else:
             text_color = "#991b1b" if prob_raw >= 0.5 else "#166534"
             border_color = "#fecaca" if prob_raw >= 0.5 else "#bbf7d0"
         else:
-            # If model is missing, this triggers the 0.0% you were seeing
-            risk_val, status, status_color, text_color, border_color = "0.0", "Model File Error", "#eee", "#333", "#ccc"
+            risk_val, status, status_color, text_color, border_color = "0.0", "SYSTEM ERROR: MODEL MISSING", "#eee", "#333", "#ccc"
 
         with st.spinner("AI Analysis in Progress..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
@@ -101,9 +99,11 @@ else:
             
             response = client.chat.completions.create(messages=[{"role": "user", "content": prompt}], model="llama-3.3-70b-versatile")
             
+            # Remove Markdown symbols for clean paper look
             clean_content = response.choices[0].message.content.replace("**", "").replace("*", "").replace("#", "")
             ai_html = clean_content.replace('\n', '<br>')
 
+            # --- THE FINAL FORMATED REPORT ---
             report_html = f"""
             <html>
             <body style="margin:0; padding:0; background-color: #FCFBF4;">
@@ -142,7 +142,7 @@ else:
                     </div>
                     
                     <div style="margin-top: 50px; padding: 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; font-size: 0.8em; color: #475569; font-family: Arial, sans-serif;">
-                        <strong>OFFICIAL DISCLAIMER:</strong> This document is an automated synthesis of data patterns and does not constitute a legal medical diagnosis. 
+                        <strong>OFFICIAL DISCLAIMER:</strong> This document is an automated synthesis of data patterns based on an 88% accurate model. It does not constitute a legal medical diagnosis. 
                         Final clinical decisions should be made in consultation with a licensed medical professional.
                     </div>
                     
@@ -161,4 +161,4 @@ else:
             if st.button("Initialize New Analysis"): st.rerun()
 
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error during synthesis: {e}")
