@@ -25,11 +25,15 @@ st.markdown("""
 # --- 3. MODEL LOADING ---
 @st.cache_resource
 def load_ml_model():
-    # Use relative path for better compatibility with Streamlit Cloud
-    file_path = 'heart_model.pkl'
+    # This gets the absolute path to the directory this script is in
+    base_path = os.path.dirname(__file__)
+    file_path = os.path.join(base_path, 'heart_model.pkl')
     
     if not os.path.exists(file_path):
-        # We use st.warning here so it doesn't break the whole app UI immediately
+        # This lists all files available to help you debug
+        available_files = os.listdir(base_path)
+        st.error(f"FILE NOT FOUND. Looking for: {file_path}")
+        st.write(f"Files actually present: {available_files}")
         return None
     try:
         with open(file_path, 'rb') as f:
@@ -37,10 +41,6 @@ def load_ml_model():
     except Exception as e:
         st.error(f"CORRUPT MODEL ERROR: {e}")
         return None
-
-# CRITICAL: Actually assign the model to a variable here!
-model = load_ml_model()
-
 # --- 4. SIDEBAR INPUTS ---
 with st.sidebar:
     st.header("📋 Patient Profile")
