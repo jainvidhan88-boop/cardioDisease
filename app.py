@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 import os  # Moved to top
 
 # --- 1. PAGE CONFIGURATION ---
-st.set_page_config(page_title="C.L.A.M. AI Physician", page_icon="👨‍⚕️", layout="centered")
+st.set_page_config(page_title="C.L.A.M.", page_icon="👨‍⚕️", layout="centered")
 
 # --- 2. MAIN UI STYLING ---
 st.markdown("""
