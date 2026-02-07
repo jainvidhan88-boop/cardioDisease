@@ -5,6 +5,7 @@ import pickle
 from groq import Groq
 import time
 import streamlit.components.v1 as components
+import os  # Moved to top
 
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(page_title="C.L.A.M. AI Physician", page_icon="👨‍⚕️", layout="centered")
@@ -22,17 +23,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 3. MODEL LOADING ---
-import os
-
 @st.cache_resource
 def load_ml_model():
-    # This finds the directory the app.py is currently sitting in
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(current_dir, 'heart_model.pkl')
+    # Use relative path for better compatibility with Streamlit Cloud
+    file_path = 'heart_model.pkl'
     
     if not os.path.exists(file_path):
-        # This will show up on your web app so you can see the "real" path
-        st.error(f"SYSTEM ERROR: Model file not found at {file_path}")
+        # We use st.warning here so it doesn't break the whole app UI immediately
         return None
     try:
         with open(file_path, 'rb') as f:
@@ -40,6 +37,10 @@ def load_ml_model():
     except Exception as e:
         st.error(f"CORRUPT MODEL ERROR: {e}")
         return None
+
+# CRITICAL: Actually assign the model to a variable here!
+model = load_ml_model()
+
 # --- 4. SIDEBAR INPUTS ---
 with st.sidebar:
     st.header("📋 Patient Profile")
@@ -66,12 +67,17 @@ if not predict_clicked:
     st.markdown("<h1 class='main-title'>C.L.A.M. Heart Health AI</h1>", unsafe_allow_html=True)
     st.markdown("<p class='made-by'>Created by Vidhan Jain</p>", unsafe_allow_html=True)
     st.markdown("""<div class="accuracy-card"><h3>Diagnostic Accuracy: 88.0%</h3></div>""", unsafe_allow_html=True)
+    
+    # Alert the user if the model file is missing before they click predict
+    if model is None:
+        st.error("⚠️ SYSTEM ALERT: 'heart_model.pkl' not detected in root directory.")
 else:
     try:
         sex_val = 1 if sex == "Male" else 0
         features = np.array([[age, sex_val, cp, bp, chol, fbs, restecg, maxhr, exang, oldpeak, slope, ca, thal]])
         
-        if model:
+        # Check if model exists and has the required method
+        if model and hasattr(model, 'predict_proba'):
             prob_raw = model.predict_proba(features)[0][1]
             risk_val = "{:.1f}".format(prob_raw * 100)
             status = "Elevated Risk Detected" if prob_raw >= 0.5 else "No Significant Risk Detected"
@@ -79,14 +85,12 @@ else:
             text_color = "#991b1b" if prob_raw >= 0.5 else "#166534"
             border_color = "#fecaca" if prob_raw >= 0.5 else "#bbf7d0"
         else:
-            risk_val, status, status_color, text_color, border_color = "0.0", "Error", "#eee", "#333", "#ccc"
-
-        
+            # If model is missing, this triggers the 0.0% you were seeing
+            risk_val, status, status_color, text_color, border_color = "0.0", "Model File Error", "#eee", "#333", "#ccc"
 
         with st.spinner("AI Analysis in Progress..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            # The Prompt now strictly forbids markdown characters
             prompt = (
                 f"You are the C.L.A.M. AI Medical Assistant. Write a formal clinical summary for {p_name}. "
                 f"Stats: Age {age}, BP {bp}, Cholesterol {chol}. "
@@ -97,11 +101,9 @@ else:
             
             response = client.chat.completions.create(messages=[{"role": "user", "content": prompt}], model="llama-3.3-70b-versatile")
             
-            # Cleaning the AI response of any accidental asterisks
             clean_content = response.choices[0].message.content.replace("**", "").replace("*", "").replace("#", "")
             ai_html = clean_content.replace('\n', '<br>')
 
-            # --- THE FINAL FORMATED REPORT ---
             report_html = f"""
             <html>
             <body style="margin:0; padding:0; background-color: #FCFBF4;">
@@ -141,7 +143,6 @@ else:
                     
                     <div style="margin-top: 50px; padding: 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; font-size: 0.8em; color: #475569; font-family: Arial, sans-serif;">
                         <strong>OFFICIAL DISCLAIMER:</strong> This document is an automated synthesis of data patterns and does not constitute a legal medical diagnosis. 
-                        The C.L.A.M. algorithm maintains an 88% verified accuracy rate based on standardized heart health datasets. 
                         Final clinical decisions should be made in consultation with a licensed medical professional.
                     </div>
                     
