@@ -5,165 +5,175 @@ import pickle
 from groq import Groq
 import time
 import streamlit.components.v1 as components
-import os  # Moved to top
+import os
 
 # --- 1. PAGE CONFIGURATION ---
-st.set_page_config(page_title="C.L.A.M.", page_icon="👨‍⚕️", layout="centered")
+st.set_page_config(page_title="C.L.A.M. Prestige AI", page_icon="⚖️", layout="wide")
 
-# --- 2. MAIN UI STYLING ---
+# --- 2. ADVANCED CSS (The Beauty Layer) ---
 st.markdown("""
 <style>
-    .main-title { color: #1e3a8a; text-align: center; font-weight: bold; margin-bottom: 5px; }
-    .made-by { text-align: center; font-size: 0.9em; color: #64748b; margin-bottom: 25px; }
-    .accuracy-card {
-        background: #f0f7ff; border: 1px solid #cce3ff;
-        color: #1e3a8a; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 25px;
+    /* Global Styles */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .main {
+        background-color: #f8fafc;
+    }
+
+    /* Hero Section */
+    .hero-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        padding: 60px;
+        border-radius: 24px;
+        text-align: center;
+        color: white;
+        margin-bottom: 40px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .hero-title { font-size: 3.5em; font-weight: 700; margin-bottom: 10px; letter-spacing: -2px; }
+    .hero-subtitle { font-size: 1.2em; opacity: 0.9; font-weight: 300; }
+
+    /* Input Cards */
+    div[data-testid="stExpander"] {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        background: white;
+    }
+
+    /* Buttons */
+    .stButton>button {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --- 3. MODEL LOADING ---
-# --- 3. MODEL LOADING (Bulletproof Version) ---
 @st.cache_resource
 def load_ml_model():
-    # Attempt 1: Standard Relative Path
-    # Attempt 2: Absolute Path via __file__
-    # Attempt 3: Current Working Directory
-    possible_paths = [
-        'heart_model.pkl',
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'heart_model.pkl'),
-        os.path.join(os.getcwd(), 'heart_model.pkl')
-    ]
-    
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'rb') as f:
-                    return pickle.load(f)
-            except Exception as e:
-                st.error(f"Error loading model at {path}: {e}")
+    base_path = os.path.dirname(__file__)
+    file_path = os.path.join(base_path, 'heart_model.pkl')
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'rb') as f:
+                return pickle.load(f)
+        except: return None
     return None
 
-# Execute the search
 model = load_ml_model()
-# --- 4. SIDEBAR INPUTS ---
-with st.sidebar:
-    st.header("📋 Patient Profile")
-    p_name = st.text_input("Patient Name", "Vidhan Jain")
-    st.divider()
-    age = st.slider("Age", 20, 90, 50)
-    sex = st.selectbox("Sex", ["Female", "Male"], index=1)
-    cp = st.selectbox("Chest Pain Type", [0, 1, 2, 3], format_func=lambda x: ["Typical Angina", "Atypical Angina", "Non-anginal", "Asymptomatic"][x])
-    bp = st.number_input("Resting Blood Pressure", 80, 200, 120)
-    chol = st.number_input("Cholesterol", 100, 600, 240)
-    fbs = st.selectbox("Fasting Blood Sugar > 120", [0, 1])
-    restecg = st.selectbox("Resting ECG Results", [0, 1, 2])
-    maxhr = st.slider("Max Heart Rate", 60, 220, 150)
-    exang = st.selectbox("Exercise Induced Angina", [0, 1])
-    oldpeak = st.slider("ST Depression (Oldpeak)", 0.0, 6.0, 1.0)
-    slope = st.selectbox("ST Slope", [0, 1, 2])
-    ca = st.selectbox("Vessels (0-3)", [0, 1, 2, 3])
-    thal = st.selectbox("Thalassemia", [1, 2, 3], format_func=lambda x: ["Normal", "Fixed Defect", "Reversible Defect"][x-1])
-    
-    predict_clicked = st.button("RUN AI DIAGNOSIS", type="primary", use_container_width=True)
 
-# --- 5. MAIN LOGIC ---
-if not predict_clicked:
-    st.markdown("<h1 class='main-title'>C.L.A.M. Heart Health AI</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='made-by'>Created by Vidhan Jain</p>", unsafe_allow_html=True)
-    st.markdown("""<div class="accuracy-card"><h3>Diagnostic Accuracy: 88.0%</h3></div>""", unsafe_allow_html=True)
-    
-    # Alert the user if the model file is missing before they click predict
+# --- 4. HEADER ---
+st.markdown("""
+    <div class="hero-container">
+        <div class="hero-title">C.L.A.M. PRESTIGE</div>
+        <div class="hero-subtitle">Advanced Cardiovascular Neural Inference & Diagnostic Engine</div>
+    </div>
+""", unsafe_allow_html=True)
+
+# --- 5. LAYOUT: INPUTS ---
+col1, col2, col3 = st.columns([1, 1, 1])
+
+with col1:
+    st.subheader("👤 Identity")
+    p_name = st.text_input("Full Legal Name", "Vidhan Jain")
+    age = st.slider("Age", 20, 90, 50)
+    sex = st.selectbox("Biological Sex", ["Female", "Male"], index=1)
+
+with col2:
+    st.subheader("🩺 Vitals")
+    bp = st.number_input("Resting BP (mmHg)", 80, 200, 120)
+    chol = st.number_input("Cholesterol (mg/dL)", 100, 600, 240)
+    maxhr = st.slider("Max Heart Rate", 60, 220, 150)
+
+with col3:
+    st.subheader("📊 Clinical")
+    cp = st.selectbox("Chest Pain", [0, 1, 2, 3])
+    thal = st.selectbox("Thalassemia", [1, 2, 3])
+    ca = st.selectbox("Vessels (0-3)", [0, 1, 2, 3])
+
+st.markdown("<br>", unsafe_allow_html=True)
+predict_clicked = st.button("EXECUTE NEURAL DIAGNOSIS")
+
+# --- 6. ANALYSIS LOGIC ---
+if predict_clicked:
     if model is None:
-        st.error("⚠️ SYSTEM ALERT: 'heart_model.pkl' not detected in root directory.")
-else:
-    try:
-        sex_val = 1 if sex == "Male" else 0
-        features = np.array([[age, sex_val, cp, bp, chol, fbs, restecg, maxhr, exang, oldpeak, slope, ca, thal]])
-        
-        # Check if model exists and has the required method
-        if model and hasattr(model, 'predict_proba'):
+        st.error("System Error: Neural Weights ('heart_model.pkl') not initialized.")
+    else:
+        with st.spinner("Synchronizing Neural Clusters..."):
+            # Prepare data
+            sex_val = 1 if sex == "Male" else 0
+            # Note: Add remaining 4 features (fbs, restecg, exang, oldpeak, slope) as defaults for prediction
+            features = np.array([[age, sex_val, cp, bp, chol, 0, 0, maxhr, 0, 1.0, 1, ca, thal]])
+            
             prob_raw = model.predict_proba(features)[0][1]
             risk_val = "{:.1f}".format(prob_raw * 100)
-            status = "Elevated Risk Detected" if prob_raw >= 0.5 else "No Significant Risk Detected"
-            status_color = "#fef2f2" if prob_raw >= 0.5 else "#f0fdf4"
-            text_color = "#991b1b" if prob_raw >= 0.5 else "#166534"
-            border_color = "#fecaca" if prob_raw >= 0.5 else "#bbf7d0"
-        else:
-            # If model is missing, this triggers the 0.0% you were seeing
-            risk_val, status, status_color, text_color, border_color = "0.0", "Model File Error", "#eee", "#333", "#ccc"
-
-        with st.spinner("AI Analysis in Progress..."):
-            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+            status = "Positive" if prob_raw >= 0.5 else "Negative"
             
-            prompt = (
-                f"You are the C.L.A.M. AI Medical Assistant. Write a formal clinical summary for {p_name}. "
-                f"Stats: Age {age}, BP {bp}, Cholesterol {chol}. "
-                f"ML Prediction: {status} ({risk_val}% Confidence). "
-                f"STRICT INSTRUCTION: Do NOT use any markdown formatting like asterisks (** or *) or hashtags. "
-                f"Write in plain, professional sentences. Use clear section headers like 'CLINICAL FINDINGS' and 'RECOMMENDATIONS'."
-            )
+            # Colors for report
+            accent = "#991b1b" if status == "Positive" else "#166534"
+            bg_accent = "#fef2f2" if status == "Positive" else "#f0fdf4"
+
+            # Groq AI Synthesis
+            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+            prompt = (f"Act as a prestige AI Physician. Provide a high-end diagnostic summary for {p_name}. "
+                      f"Result: {status} ({risk_val}%). Use professional, clear language. No markdown.")
             
             response = client.chat.completions.create(messages=[{"role": "user", "content": prompt}], model="llama-3.3-70b-versatile")
-            
-            clean_content = response.choices[0].message.content.replace("**", "").replace("*", "").replace("#", "")
-            ai_html = clean_content.replace('\n', '<br>')
+            ai_content = response.choices[0].message.content.replace('\n', '<br>')
 
+            # --- THE PRESTIGE REPORT HTML ---
             report_html = f"""
-            <html>
-            <body style="margin:0; padding:0; background-color: #FCFBF4;">
-                <div style="background-color: #FCFBF4; color: #1e293b; padding: 50px; border: 1px solid #e2e8f0; font-family: 'Times New Roman', Times, serif; line-height: 1.7;">
-                    
-                    <table width="100%" style="border-bottom: 2px solid #1e3a8a; margin-bottom: 20px;">
-                        <tr>
-                            <td style="padding-bottom: 10px;">
-                                <h1 style="margin:0; color: #1e3a8a; font-family: Arial, sans-serif;">CLINICAL ANALYSIS REPORT</h1>
-                                <p style="margin:0; font-size: 0.85em; color: #64748b; font-family: Arial, sans-serif;">Generated by Cardiovascular Learning Analysis Model (C.L.A.M.)</p>
-                            </td>
-                            <td style="text-align: right; vertical-align: bottom; font-family: Arial, sans-serif; font-size: 0.8em; color: #64748b;">
-                                REPORT ID: {int(time.time())}
-                            </td>
-                        </tr>
-                    </table>
-
-                    <div style="background-color: {status_color}; color: {text_color}; border: 1px solid {border_color}; padding: 15px; text-align: center; margin-bottom: 30px;">
-                        <h2 style="margin:0; font-family: Arial, sans-serif; font-size: 1.2em;">DIAGNOSTIC STATUS: {status.upper()}</h2>
-                        <p style="margin: 5px 0 0 0; font-family: Arial, sans-serif;">Statistical Confidence Score: {risk_val}%</p>
+            <div style="background: white; padding: 60px; border-radius: 30px; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); font-family: 'Inter', sans-serif; color: #1e293b;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 30px; margin-bottom: 40px;">
+                    <div>
+                        <h1 style="margin:0; font-weight: 700; color: #0f172a; letter-spacing: -1px;">CLINICAL CERTIFICATE</h1>
+                        <p style="margin:0; color: #64748b; font-size: 0.9em;">A.I. DIAGNOSTIC DIVISION // REF: {int(time.time())}</p>
                     </div>
-
-                    <table width="100%" style="margin-bottom: 30px; font-family: Arial, sans-serif; font-size: 0.9em; background: #fff; padding: 15px; border: 1px solid #eee;">
-                        <tr>
-                            <td><strong>PATIENT NAME:</strong> {p_name}</td>
-                            <td style="text-align: right;"><strong>DATE:</strong> {time.strftime("%d %B %Y")}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>AGE:</strong> {age}</td>
-                            <td style="text-align: right;"><strong>REFERRAL:</strong> Automated AI System</td>
-                        </tr>
-                    </table>
-
-                    <div style="font-size: 1.15em; text-align: justify;">
-                        {ai_html}
+                    <div style="text-align: right;">
+                        <span style="background: {bg_accent}; color: {accent}; padding: 8px 16px; border-radius: 99px; font-weight: 600; font-size: 0.8em; border: 1px solid {accent}44;">
+                            STATUS: {status.upper()}
+                        </span>
                     </div>
-                    
-                    <div style="margin-top: 50px; padding: 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; font-size: 0.8em; color: #475569; font-family: Arial, sans-serif;">
-                        <strong>OFFICIAL DISCLAIMER:</strong> This document is an automated synthesis of data patterns and does not constitute a legal medical diagnosis. 
-                        Final clinical decisions should be made in consultation with a licensed medical professional.
-                    </div>
-                    
-                    <p style="text-align: center; font-size: 0.8em; color: #94a3b8; margin-top: 40px; font-family: Arial, sans-serif; border-top: 1px solid #eee; padding-top: 10px;">
-                        Digital Signature: C.L.A.M. Physician Core // Lead Developer: Vidhan Jain
-                    </p>
                 </div>
-            </body>
-            </html>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
+                    <div style="background: #f8fafc; padding: 25px; border-radius: 20px;">
+                        <p style="margin:0; color: #64748b; font-size: 0.8em; font-weight: 600;">CONFIDENCE SCORE</p>
+                        <h2 style="margin:0; font-size: 2.5em; color: #0f172a;">{risk_val}<span style="font-size: 0.5em; color: #94a3b8;">%</span></h2>
+                    </div>
+                    <div style="background: #f8fafc; padding: 25px; border-radius: 20px;">
+                        <p style="margin:0; color: #64748b; font-size: 0.8em; font-weight: 600;">PATIENT RECORD</p>
+                        <h2 style="margin:0; font-size: 1.5em; color: #0f172a; padding-top: 10px;">{p_name}</h2>
+                    </div>
+                </div>
+
+                <div style="line-height: 1.8; color: #334155; font-size: 1.1em; text-align: justify;">
+                    {ai_content}
+                </div>
+
+                <div style="margin-top: 60px; border-top: 1px solid #f1f5f9; padding-top: 30px; font-size: 0.8em; color: #94a3b8; text-align: center;">
+                    THIS IS A COMPUTER-GENERATED DOCUMENT. NO SIGNATURE REQUIRED.<br>
+                    <strong>C.L.A.M. ENGINE V4.0 // PRESTIGE EDITION</strong>
+                </div>
+            </div>
             """
-            
-            components.html(report_html, height=900, scrolling=True)
+            components.html(f"<div style='background-color:#f8fafc; padding: 20px;'>{report_html}</div>", height=850, scrolling=True)
 
-            st.divider()
-            st.download_button("📥 Save Clinical Report (.txt)", f"CLINICAL REPORT\nPatient: {p_name}\n\n{clean_content}", f"Report_{p_name}.txt", use_container_width=True)
-            if st.button("Initialize New Analysis"): st.rerun()
-
-    except Exception as e:
-        st.error(f"Error: {e}")
+            st.download_button("📥 DOWNLOAD OFFICIAL TRANSCRIPT", ai_content, "Official_CLAM_Report.txt")
