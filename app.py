@@ -22,15 +22,24 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 3. MODEL LOADING ---
+import os
+
 @st.cache_resource
 def load_ml_model():
+    # This finds the directory the app.py is currently sitting in
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, 'heart_model.pkl')
+    
+    if not os.path.exists(file_path):
+        # This will show up on your web app so you can see the "real" path
+        st.error(f"SYSTEM ERROR: Model file not found at {file_path}")
+        return None
     try:
-        with open('heart_model.pkl', 'rb') as f:
+        with open(file_path, 'rb') as f:
             return pickle.load(f)
-    except: return None
-
-model = load_ml_model()
-
+    except Exception as e:
+        st.error(f"CORRUPT MODEL ERROR: {e}")
+        return None
 # --- 4. SIDEBAR INPUTS ---
 with st.sidebar:
     st.header("📋 Patient Profile")
