@@ -3,3 +3,4 @@ pandas
 numpy
 groq
 scikit-learn
+xgboost
