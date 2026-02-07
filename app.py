@@ -40,7 +40,7 @@ def load_ml_model():
 model = load_ml_model()
 
 # --- 4. UI HEADER ---
-st.markdown('<div class="hero-container"><div class="hero-title">C.L.A.M. Prestige</div><p style="opacity:0.8;">Machine Learning Interface for Cardiovascular Research</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-container"><div class="hero-title">CardioVascular Learning Analysis Model  C.L.A.M.</div><p style="opacity:0.8;">Machine Learning Interface for Cardiovascular Research</p></div>', unsafe_allow_html=True)
 
 # --- 5. ENCODED INPUTS (3-Column Layout) ---
 col1, col2, col3 = st.columns(3)
